@@ -213,6 +213,17 @@ Part types:
 
 **Constraint:** The EdenFS redirect hook denies `explore` and tells the model to use `codesearch`. In the dry run, the redirect hook did NOT fire — both agents ran independently. If the hook does fire during eval, it means `explore` cases will actually test `codesearch` via redirect (which is still useful data — it measures the redirect overhead).
 
+### Important Finding: MCP Tools Available to Both Agents
+
+**Both `explore` and `codesearch` have access to `meta_core_search_files` (MCP indexed search).** This was discovered during eval setup:
+
+- MCP tools are injected globally in `prompt.ts:500-582` — `mcp.tools()` returns all tools from all connected MCP servers with no agent-level filtering.
+- The explore agent's `"*": "deny"` permission should block MCP tools, but `Permission.merge(defaults, agentConfig, user)` applies user config last, and `findLast` means later rules win.
+- The system-level MCP config at `/etc/opencode/opencode.json` (read-only, root-owned) injects `meta_core` and cannot be overridden from user config.
+- Attempts to disable MCP via user config (`"mcp": {}`, `"disabled": true`, `command: ["/bin/false"]`) all failed — the system config takes precedence.
+
+**Implication:** This eval measures **prompt/strategy quality** (19-line generic prompt vs 90-line 7-step methodology), NOT tool access differences. Both agents have the same search tools available. This is still a valid comparison — a better prompt should produce better search strategy, synthesis, and response quality even with identical tool access.
+
 ---
 
 ## 5. Evaluation Cases
@@ -460,3 +471,90 @@ export METACODE_DEV_REPO=~/fbsource
 - OpenCode managed settings: `fbcode/3pai_tooling/opencode/managed-settings.json`
 - Meta plugin: `packages/meta/src/server.ts`
 - claude_eval framework: `fbcode/devai/claude_eval/`
+
+---
+
+## 10. Prior Art: Aahan's CLI vs MCP Eval
+
+**Source:** [Workplace post](https://fb.workplace.com/groups/csi.eng/permalink/2387794448386283/) by Aahan Aggarwal (2026-03-25)
+
+Aahan evaluated an `rg`-like CLI (`meta-rg`) against the MCP (`search_files`) for agent code search — a different variable than ours (tool interface vs subagent prompt quality), but with a significantly more rigorous evaluation methodology.
+
+### Results
+
+| Metric | MCP 5ctx | MCP 0ctx | CLI |
+|--------|----------|----------|-----|
+| Pass rate | 65% | 68% | 64% |
+| Avg cost | $0.53 | $0.56 | $0.78 |
+| Median cost | $0.40 | $0.39 | $0.59 |
+| Avg time | 157s | 165s | 187s |
+| Avg tool calls | 18.2 | 19.3 | 25.2 |
+
+**TLDR:** MCP with 5-line context wins — it lets the agent glance at surrounding context to quickly discard irrelevant files. CLI naming and arg mismatch hurts (46% of tests require `--help` lookups).
+
+### Methodology Differences vs Our Eval
+
+| Dimension | Aahan's Eval | Our Eval |
+|-----------|-------------|----------|
+| **Framework** | MSL Judge (`fbcode/msl/judge/`) on Sandcastle | Custom scripts, local sequential runs |
+| **Test cases** | 100 from mma_search benchmark (file-finding, ground truth file paths) | 24 hand-crafted across 6 categories (no ground truth) |
+| **Judging** | LLM-as-Judge with weighted quality factors + critical pass/fail requirements | Automated metrics only (wall time, tokens, tool calls) |
+| **Quality scoring** | search_strategy (0.34), tool_effectiveness (0.33), path_accuracy (0.33) | None |
+| **Qualitative** | LLM-compiled failure mode taxonomy | Manual review |
+
+### Failure Modes (applicable to our eval)
+
+1. **Terminology mismatch (biggest):** Query says "partnership ads" but code uses `branded_content`
+2. **Wrong directory scope:** Agent assumes `fbandroid/` when code is in `fbobjc/`
+3. **Settling too early:** Finds plausible file, presents it without checking alternatives
+4. **Query spiral:** 30-100+ queries trying minor variations instead of pivoting
+
+### Eval Case Format (from P2255051401)
+
+```yaml
+id: cli-001
+suite: code_search
+description: 'Find: LumaResizeEventEmitter.js'
+scenario: 'A developer needs to find a specific file...'
+question: 'Where is the shared resize event emitter for Luma components?'
+
+critical_requirements:
+  - id: found_correct_file
+    description: Response references the correct file path
+    check: 'Response contains LumaResizeEventEmitter.js or full path'
+
+quality_factors:
+  - id: search_strategy
+    description: Good query formulation, filters, narrowing
+    weight: 0.34
+  - id: tool_effectiveness
+    description: Search tool returned useful results
+    weight: 0.33
+  - id: path_accuracy
+    description: File path is complete and correct
+    weight: 0.33
+
+expected_answer: |
+  xplat/js/RKJSModules/Libraries/Luma/components/resize/__private__/LumaResizeEventEmitter.js
+```
+
+### Key References
+
+- **MSL Judge code:** `fbcode/msl/judge/clients/claude_code.py` — `ClaudeCodeAgentExecutor` + `ClaudeCodeJudgeClient`
+- **mma_search config:** `fbsource/tools/devmate/evals/devai/mma_search_v2.yaml`
+- **mma_search data:** `manifold://devai/tree/synthetic-benchmarks/code_retrieval_synthetic_benchmark_v2_1000.csv` (1000 cases, CSV with `filename` + `query`)
+- **CLI source:** `fbsource/fbcode/codesearch/experimental_ucs_cli/src/main.rs`
+- **Community post:** https://fb.workplace.com/groups/claude.code.community/permalink/935714322304022/
+
+---
+
+## 11. Plan: Import mma_search Cases + Add LLM-as-Judge
+
+Based on the comparison with Aahan's approach, we're enhancing our eval harness:
+
+1. **`scripts/import_mma_search.py`** — Download mma_search CSV from Manifold, convert to manifest format with `expected_answer`, `critical_requirements`, and `quality_factors` per case. Default: first 100 cases.
+2. **`scripts/judge_results.py`** — Score collected results using `claude --print` (haiku model). Programmatic pass/fail checks (substring match for file path) + LLM quality factor scoring. Outputs `judged.json`.
+3. **Update `compare_results.py`** — Add pass rate + quality score columns when judged data is available.
+4. **Update `run_eval.sh`** — Add `--manifest` flag to select alternate case files (e.g., `cases/mma_search.json`).
+
+Full implementation plan: `.claude/plans/reactive-noodling-shannon.md`
