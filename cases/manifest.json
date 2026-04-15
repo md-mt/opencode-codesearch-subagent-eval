@@ -1,0 +1,148 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "category": "pinpoint",
+      "query": "Find the definition of the TaoClient class",
+      "prompt": "Find the definition of the TaoClient class in fbsource. Report: which file(s) define it, the class signature, and key methods."
+    },
+    {
+      "id": 2,
+      "category": "pinpoint",
+      "query": "Where is getGatekeeperValue implemented?",
+      "prompt": "Where is getGatekeeperValue implemented in fbsource? Show the file path, function signature, and how it reads GK values."
+    },
+    {
+      "id": 3,
+      "category": "pinpoint",
+      "query": "Find the Thrift definition for the UserProfile struct",
+      "prompt": "Find the Thrift definition for the UserProfile struct in fbsource. Show the .thrift file path and the struct fields."
+    },
+    {
+      "id": 4,
+      "category": "pinpoint",
+      "query": "Where is the BucketizedCounter class defined in folly?",
+      "prompt": "Where is the BucketizedCounter class defined in folly within fbsource? Show the file path, class signature, and key public methods."
+    },
+    {
+      "id": 5,
+      "category": "cross-cutting",
+      "query": "Find all Thrift services that have a method named getUser",
+      "prompt": "Find all Thrift services in fbsource that have a method named getUser. List each .thrift file path and the service name."
+    },
+    {
+      "id": 6,
+      "category": "cross-cutting",
+      "query": "Which Python files use the @retry decorator in fbcode?",
+      "prompt": "Which Python files use the @retry decorator in fbcode? List the file paths and show the import/usage pattern."
+    },
+    {
+      "id": 7,
+      "category": "cross-cutting",
+      "query": "Find all BUCK targets that use python_unittest in fbcode/common/",
+      "prompt": "Find all BUCK targets that use python_unittest in fbcode/common/. List the BUCK file paths and target names."
+    },
+    {
+      "id": 8,
+      "category": "cross-cutting",
+      "query": "Find all implementations of the CacheInterface across fbcode",
+      "prompt": "Find all implementations of the CacheInterface across fbcode. List each file path and class name that implements or extends this interface."
+    },
+    {
+      "id": 9,
+      "category": "architecture",
+      "query": "How does Configerator config loading work end-to-end?",
+      "prompt": "How does Configerator config loading work end-to-end in fbsource? Trace from config file to runtime value. Show key files and the loading path."
+    },
+    {
+      "id": 10,
+      "category": "architecture",
+      "query": "Explain how Tupperware job scheduling works",
+      "prompt": "Explain how Tupperware job scheduling works in fbsource. What's the path from job spec to container? Show key files and components."
+    },
+    {
+      "id": 11,
+      "category": "architecture",
+      "query": "How does the Buck2 remote execution system dispatch build actions?",
+      "prompt": "How does the Buck2 remote execution system dispatch build actions in fbsource? Show the key files and trace the dispatch path."
+    },
+    {
+      "id": 12,
+      "category": "architecture",
+      "query": "How does the Scuba write path work?",
+      "prompt": "How does the Scuba write path work in fbsource? Trace from client library to table storage. Show key files and the data flow."
+    },
+    {
+      "id": 13,
+      "category": "api-discovery",
+      "query": "How do I create a new Scuba table?",
+      "prompt": "How do I create a new Scuba table in fbsource? Show the config files, registration steps, and example code."
+    },
+    {
+      "id": 14,
+      "category": "api-discovery",
+      "query": "Show examples of how to use the ServiceRouter client in C++",
+      "prompt": "Show me examples of how to use the ServiceRouter client in C++ within fbsource. Find the API headers and usage patterns."
+    },
+    {
+      "id": 15,
+      "category": "api-discovery",
+      "query": "What's the API for sending a Workplace post programmatically?",
+      "prompt": "What's the API for sending a Workplace post programmatically in fbsource? Find the client library and show usage examples."
+    },
+    {
+      "id": 16,
+      "category": "api-discovery",
+      "query": "How do I add a new GK (Gatekeeper) check in Python?",
+      "prompt": "How do I add a new GK (Gatekeeper) check in Python within fbsource? Show the import, API call pattern, and any registration needed."
+    },
+    {
+      "id": 17,
+      "category": "needle-in-haystack",
+      "query": "Find the file that defines error code E1234567",
+      "prompt": "Find files in fbsource that define numbered error codes or error constants (like E1234567 or similar patterns). Show the file paths and how error codes are registered."
+    },
+    {
+      "id": 18,
+      "category": "needle-in-haystack",
+      "query": "Which file handles the X-FB-Request-ID HTTP header?",
+      "prompt": "Which file in fbsource handles the X-FB-Request-ID HTTP header? Show where it's set, read, or propagated."
+    },
+    {
+      "id": 19,
+      "category": "needle-in-haystack",
+      "query": "Find where slow_query_threshold_ms config key is read and used",
+      "prompt": "Find where the slow_query_threshold_ms config key (or similar slow query threshold configuration) is read and used in fbsource. Show the file paths and usage context."
+    },
+    {
+      "id": 20,
+      "category": "needle-in-haystack",
+      "query": "Find the source of the log message 'Failed to connect to upstream service'",
+      "prompt": "Find the source of the log message 'Failed to connect to upstream service' or similar upstream connection failure messages in fbsource. Show the file path and surrounding code."
+    },
+    {
+      "id": 21,
+      "category": "broad-exploration",
+      "query": "What logging frameworks are available in fbcode?",
+      "prompt": "What logging frameworks are available in fbcode within fbsource and how do they compare? List each framework, its location, and key characteristics."
+    },
+    {
+      "id": 22,
+      "category": "broad-exploration",
+      "query": "Map out the authentication/authorization middleware stack for fbcode web services",
+      "prompt": "Map out the authentication/authorization middleware stack for fbcode web services in fbsource. Show the key components, file paths, and how they chain together."
+    },
+    {
+      "id": 23,
+      "category": "broad-exploration",
+      "query": "What are the different caching layers available in fbcode infra?",
+      "prompt": "What are the different caching layers available in fbcode infra within fbsource? List each layer, its file location, and when to use it."
+    },
+    {
+      "id": 24,
+      "category": "broad-exploration",
+      "query": "How is feature flagging implemented across mobile vs backend?",
+      "prompt": "How is feature flagging implemented across mobile (fbandroid + fbobjc) vs backend (fbcode) in fbsource? Compare the approaches and show key file paths."
+    }
+  ]
+}

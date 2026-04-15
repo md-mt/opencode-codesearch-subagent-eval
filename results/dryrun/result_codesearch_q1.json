@@ -1,0 +1,117 @@
+{
+  "query": "Find the definition of the TaoClient class in fbsource",
+  "agent": "codesearch",
+  "session_id": "ses_26d5e07e7ffe6XTDcDLDPxGYUF",
+  "subagent_sessions": [
+    "ses_26d5d5b71ffeXBhx8I3wxnfUrx"
+  ],
+  "parent_metrics": {
+    "session_id": "ses_26d5e07e7ffe6XTDcDLDPxGYUF",
+    "title": "TaoClient definition and key methods in fbsource",
+    "wall_time_ms": 308649,
+    "message_count": 6,
+    "tool_calls_summary": [
+      {
+        "tool": "meta_core_search_files",
+        "count": 1
+      },
+      {
+        "tool": "read",
+        "count": 1
+      },
+      {
+        "tool": "task",
+        "count": 1
+      }
+    ],
+    "tool_calls_detail": [
+      {
+        "tool": "task",
+        "status": "completed",
+        "duration_ms": 68974,
+        "input_preview": "{'subagent_type': 'codesearch', 'description': 'Find TaoClient class definition', 'prompt': 'Search for the definition of the TaoClient class in the fbsource repository. \\n\\nFind:\\n1. Which file(s) de"
+      },
+      {
+        "tool": "meta_core_search_files",
+        "status": "completed",
+        "duration_ms": 2434,
+        "input_preview": "{'pattern': 'class TaoClient', 'engine': 'STRMATCH', 'output_mode': 'content', 'context': 15}"
+      },
+      {
+        "tool": "read",
+        "status": "completed",
+        "duration_ms": 273,
+        "input_preview": "{'filePath': '/data/users/mengwei/fbsource/fbcode/cacheclient/tao2/prod/cpp/TaoClient.h'}"
+      }
+    ],
+    "total_tool_calls": 3,
+    "final_response": "## TaoClient Class Definition\n\nThe **TaoClient** class is defined in multiple locations across fbsource. Here are the key definitions:\n\n### 1. **Primary C++ Implementation** (Main Client)\n**File:** `/data/users/mengwei/fbsource/fbcode/cacheclient/tao2/prod/cpp/TaoClient.h`\n\n**Class Signature:**\n```cpp\nnamespace facebook::cacheclient {\n\nclass TaoClient {\n public:\n  using CController = memcache::TaoCppController;\n  using ImplType = tao_impl::TaoClientImpl<CController>;\n  using BaseImpl = memcache::CacheClientCommonBase<ImplType, folly::dynamic>;\n```\n\n**Key Constructors:**\n- `explicit TaoClient(std::shared_ptr<ImplType> impl)`\n- `TaoClient(std::shared_ptr<ImplType> impl, folly::Executor& executor)`\n- Multiple constructors accepting connections (BaseTaoConnectionType, UcacheConnectionType)\n\n**Location in source:** Also exists in dev branch at `fbcode/cacheclient/tao2/dev/cpp/TaoClient.h`\n\n### 2. **Hack/PHP Implementation** (WWW)\n**File:** `/data/users/mengwei/fbsource/www/flib/storage/tao/TaoClient.php`\n\n**Class Signature:**\n```php\n<<Oncalls('cacheclient')>>\nfinal class TaoClient {\n  use TaoClientBase;\n```\n\n### 3. **Wrapper Implementations** (Various Services)\n\n| File | Purpose |\n|------|---------|\n| `fbcode/titan/atlas/tao/client/TaoClient.h` | Atlas/Akkio service wrapper implementing `ITaoClient` |\n| `fbcode/instagram/ranking/fookeep/fetchers/TaoClient.h` | Instagram ranking service wrapper |\n| `fbcode/commerce/storage/TaoClient.h` | Commerce storage wrapper |\n| `fbcode/multifeed/viralityservice/TaoClient.h` | Virality service interface |\n| `fbcode/admarket/lib/taoclient/TaoClient.h` | Ad market wrapper |\n\n---\n\n## Key Methods (C++ Main Implementation)\n\nThe TaoClient provides three API styles for each operation (sync, semiFuture, coroutine):\n\n### **Read Operations:**\n- `FbobjGetRequest` / `FbobjGetResult` - Get FB objects\n- `FbobjStringGetRequest` / `FbobjStringGetResult` - Get FB objects as strings\n- `FbtypeGetRequest` / `FbtypeGetResult` - Get FB type\n- `AssocPointGetRequest` / `SinglePointGetResult` - Get single association\n- `AssocMultiPointGetRequest` / `MultiPointGetResult` - Get multiple associations\n- `AssocRangeGetRequest` / `RangeGetResult` - Get association range\n- `AssocCountRequest` / `CountGetResult` - Get association count\n- `FbkeyPointGetRequest` / `Fbkey` variants - FBKey-based lookups\n\n### **Write Operations:**\n- `FbobjCreateRequest` / `FbobjCreateResult`\n- `FbobjUpdateRequest` / `TaoSetResult`\n- `FbobjIncrementRequest` / `IncrementResult`\n- `FbobjEnableRequest` / `TaoSetResult`\n- `FbobjDisableRequest` / `TaoSetResult`\n- `FbobjDeleteRequest` / `TaoSetResult`\n- `AssocSetRequest` / `TaoSetResult`\n- `AssocIncrementRequest` / `IncrementResult`\n- `AssocDeleteRequest` / `TaoSetResult`\n- `FbkeySetRequest` / `TaoSetResult`\n\n### **Multi-Write & Transactions:**\n- `MultiWriteRequest` / `MultiWriteResult`\n- `MultiWriteRequestV2` / `MultiWriteResult`\n- `TaoTxnReserveRequest`, `TaoTxnCommitRequest`, `TaoTxnRollbackRequest`\n\n### **Invalidation:**\n- `FbobjInvalidateRequest` / `TaoInvalidateResult`\n- `AssocInvalidateRequest` / `TaoInvalidateResult`\n- `FbkeyInvalidateRequest` / `TaoInvalidateResult`\n\n### **Utility Methods:**\n- `getStatCounters()` - Get cache client statistics\n- `getRoutingPrefix()` - Get routing prefix\n- `healthCheck()` - Health check\n- `setCryptoAuthToken()` - Set auth token\n- `getConfigOrError()` / `getConfigEnforced()` - Get FBObject config\n- `getAssocConfigOrError()` / `getAssocConfigEnforced()` - Get association config\n- `getIpPortForShard()` - Get shard routing info\n- `checkAPB()` / `getAPBStatus()` - Assoc Presence Bit checks",
+    "turn_count": 1,
+    "tokens": {
+      "input": 39782,
+      "output": 1519,
+      "reasoning": 166,
+      "cache_read": 63808,
+      "cache_write": 0
+    },
+    "cost": 0
+  },
+  "subagent_metrics": [
+    {
+      "session_id": "ses_26d5d5b71ffeXBhx8I3wxnfUrx",
+      "title": "Find TaoClient class definition (@codesearch subagent)",
+      "wall_time_ms": 56017,
+      "message_count": 5,
+      "tool_calls_summary": [
+        {
+          "tool": "glob",
+          "count": 1
+        },
+        {
+          "tool": "grep",
+          "count": 3
+        }
+      ],
+      "tool_calls_detail": [
+        {
+          "tool": "grep",
+          "status": "completed",
+          "duration_ms": 712,
+          "input_preview": "{'pattern': 'class TaoClient', 'include': '*.cpp,*.h,*.py,*.php,*.hh,*.java,*.rs,*.go'}"
+        },
+        {
+          "tool": "grep",
+          "status": "completed",
+          "duration_ms": 14,
+          "input_preview": "{'pattern': 'TaoClient', 'include': '*'}"
+        },
+        {
+          "tool": "grep",
+          "status": "completed",
+          "duration_ms": 15,
+          "input_preview": "{'pattern': 'TaoClient'}"
+        },
+        {
+          "tool": "glob",
+          "status": "error",
+          "duration_ms": 0,
+          "input_preview": "{}"
+        }
+      ],
+      "total_tool_calls": 4,
+      "final_response": "",
+      "turn_count": 1,
+      "tokens": {
+        "input": 5195,
+        "output": 393,
+        "reasoning": 196,
+        "cache_read": 10048,
+        "cache_write": 0
+      },
+      "cost": 0,
+      "child_session_id": "ses_26d5d5b71ffeXBhx8I3wxnfUrx"
+    }
+  ],
+  "jsonl_metrics": {},
+  "error": null
+}
