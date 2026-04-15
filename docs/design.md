@@ -303,6 +303,106 @@ Output JSON per session includes:
 - `subagent_metrics[]`: same fields for each child (subagent) session
 - `jsonl_metrics`: events from the NDJSON stream (less detailed)
 
+### Data Extraction Spec
+
+Each eval run produces a result JSON with three layers of data:
+
+**Layer 1: JSONL stream** (`opencode run --format json` stdout)
+- Events are buffered until process exit — not useful for real-time monitoring
+- Provides `sessionID` (used to look up the full session in the DB)
+- Event types: `step_start`, `tool_use`, `text`, `step_finish`, `error`
+- Limitation: tool names and text content are often empty in JSONL events
+
+**Layer 2: Parent session export** (`opencode export <parentSessionID>`)
+- The main agent's full conversation including its tool calls
+- Contains the `task` tool call (which spawned the subagent) with duration
+- Contains the final synthesized response the user would see
+- Token usage per step (input/output/reasoning/cache.read/cache.write)
+
+**Layer 3: Subagent session export** (SQLite `parent_id` lookup → `opencode export <childSessionID>`)
+- The subagent's internal conversation — all search tool calls, intermediate reads
+- Shows exactly which tools the subagent used (grep, glob, read, search_files, etc.)
+- Contains the subagent's raw response (before parent synthesizes it)
+- Independent timing and token counts
+
+**Finding child sessions:**
+```bash
+sqlite3 ~/.local/share/opencode/opencode.db \
+  "SELECT id, title FROM session WHERE parent_id = '<parentSessionID>'"
+```
+
+### Output JSON Schema
+
+Each result JSON (per case × agent) has this structure:
+
+```json
+{
+  "query": "Find the definition of the TaoClient class",
+  "agent": "explore",
+  "session_id": "ses_...",              // parent session ID
+  "subagent_sessions": ["ses_..."],     // child session IDs
+  "parent_metrics": {
+    "session_id": "ses_...",
+    "title": "...",                     // auto-generated session title
+    "wall_time_ms": 308649,             // total parent session duration
+    "message_count": 6,                 // number of messages in conversation
+    "tool_calls_summary": [             // tool usage counts
+      {"tool": "task", "count": 1},
+      {"tool": "meta_core_search_files", "count": 1}
+    ],
+    "tool_calls_detail": [              // per-call details
+      {
+        "tool": "task",
+        "status": "completed",
+        "duration_ms": 68974,           // how long the subagent took
+        "input_preview": "{'subagent_type': 'explore', ...}"
+      }
+    ],
+    "total_tool_calls": 3,
+    "final_response": "## TaoClient...", // the response the user sees
+    "turn_count": 1,
+    "tokens": {                          // aggregated across all steps
+      "input": 39782,
+      "output": 1519,
+      "reasoning": 166,
+      "cache_read": 63808,
+      "cache_write": 0
+    },
+    "cost": 0
+  },
+  "subagent_metrics": [                  // one entry per child session
+    {
+      "session_id": "ses_...",
+      "title": "Find TaoClient definition (@explore subagent)",
+      "wall_time_ms": 262908,            // subagent-only duration
+      "tool_calls_summary": [
+        {"tool": "meta_core_search_files", "count": 1},
+        {"tool": "read", "count": 5}
+      ],
+      "tool_calls_detail": [...],
+      "total_tool_calls": 6,
+      "final_response": "Based on my search...",  // subagent's raw response
+      "tokens": {
+        "input": 51006,
+        "output": 2812,
+        "reasoning": 338,
+        "cache_read": 159808,
+        "cache_write": 0
+      }
+    }
+  ],
+  "jsonl_metrics": { ... },              // parsed from JSONL (less detailed)
+  "error": null
+}
+```
+
+**Key metrics for comparison:**
+- `subagent_metrics[0].wall_time_ms` — how long the search agent took (excludes parent overhead)
+- `subagent_metrics[0].tokens.input` — input tokens consumed (cost proxy)
+- `subagent_metrics[0].total_tool_calls` — efficiency of search strategy
+- `parent_metrics.final_response` — what the user actually sees (quality)
+- `subagent_metrics[0].tool_calls_summary` — which tools were used (grep vs search_files)
+
 ### compare_results.py
 
 Reads collected results and produces:
